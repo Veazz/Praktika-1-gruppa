@@ -1,0 +1,8 @@
+expand Document
+{
+    expand DocumentItem
+    {
+        string palletNumber
+        string SN
+    }
+}

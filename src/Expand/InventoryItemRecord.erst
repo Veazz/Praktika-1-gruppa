@@ -1,0 +1,8 @@
+expand type Document
+{
+    expand type InventoryItemRecord
+    {
+        string palletNumber
+        string SN
+    }
+}
