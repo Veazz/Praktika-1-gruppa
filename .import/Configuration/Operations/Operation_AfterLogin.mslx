@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operation xmlns:clr="http://schemas.cleverence.ru/clr" executionContext="Client" fullscreen="Inherit" lock="No" name="AfterLogin" shared="False">
+  <Actions />
+  <Parameters>
+    <FieldInfo alias="" fieldName="CurrentUser" fieldType="Object"></FieldInfo>
+    <FieldInfo alias="" fieldName="CurrentGroup" fieldType="Object"></FieldInfo>
+  </Parameters>
+  <Returns></Returns>
+</Operation>

@@ -1,0 +1,6 @@
+type Marks of Table
+{
+    string SG
+    string GTIN
+    string BoxBC
+}

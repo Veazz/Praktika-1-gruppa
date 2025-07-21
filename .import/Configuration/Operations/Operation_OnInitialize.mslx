@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Operation xmlns:clr="http://schemas.cleverence.ru/clr" executionContext="Client" fullscreen="Inherit" lock="No" name="OnInitialize" shared="False">
+  <Actions />
+  <Parameters></Parameters>
+  <Returns></Returns>
+</Operation>

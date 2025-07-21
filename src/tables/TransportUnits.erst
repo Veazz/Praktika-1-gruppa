@@ -1,0 +1,5 @@
+type TransportUnits of Table
+{
+    string TUBarcode
+    string ParentBarcode
+}
