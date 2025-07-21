@@ -3,6 +3,7 @@ expand type Document {
 
 
     client function ItemsInBox() {
+        GO.ShowBaloon("товары в коробки", 3000, true)
         return
     }
 
