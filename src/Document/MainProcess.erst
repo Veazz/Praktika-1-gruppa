@@ -1,13 +1,13 @@
-[Alias = "Товары в коробку"]
+[Alias = "Основной процесс"]
 [ShowDocumentsFromServerInList = true]
 
 type MainProcess of Document {
     client function DocumentEditResult Edit(User currentUser, UserGroup currentGroup) {
-        if (Document.CreatedOnPDA != true) {
+        if (this.CreatedOnPDA != true) {
             GO.ShowErrorBaloon("Вы открыли докумет с сервера.\nТак нельзя!", 5000, true)
             return DocumentEditResult.Abort
         }
-        
+
         Menu(
             SaveInHistory = true,
             Buttons = [

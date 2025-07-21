@@ -9,14 +9,11 @@ expand type Document {
     }
 
     client function ViewItems() {
-        return
     }
 
     client function Settings() {
-        return
     }
     
     client function Exit() { 
-        return
     }
 }
