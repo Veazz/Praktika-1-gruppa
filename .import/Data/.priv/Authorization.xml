@@ -3,7 +3,7 @@
   <Groups>
     <UserGroup autorunDocumentTypeName="" batchMode="False" id="Main" name="Main" role="MobileDeviceUser" serverSideInventory="False">
       <DocumentTypeNames>
-        <String>main_operation</String>
+        <String>Aggregation</String>
       </DocumentTypeNames>
     </UserGroup>
   </Groups>

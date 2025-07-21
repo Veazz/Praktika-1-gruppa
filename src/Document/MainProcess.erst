@@ -1,7 +1,7 @@
-[Alias = "Основной процесс"]
+[Alias = "Агрегация"]
 [ShowDocumentsFromServerInList = true]
 
-type MainProcess of Document {
+type Aggregation of Document {
     client function DocumentEditResult Edit(User currentUser, UserGroup currentGroup) {
         if (this.CreatedOnPDA != true) {
             GO.ShowErrorBaloon("Вы открыли докумет с сервера.\nТак нельзя!", 5000, true)
@@ -55,7 +55,7 @@ type MainProcess of Document {
         }
 
         on exit {
-            return DocumentEditResult.Abort 
+            return DocumentEditResult.Abort
             Exit()
         }
         back
