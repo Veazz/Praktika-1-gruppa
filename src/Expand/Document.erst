@@ -1,0 +1,22 @@
+expand type Document {
+    
+    client function ItemsInBox() {
+        return
+    }
+
+    client function BoxInPallets() {
+        return
+    }
+
+    client function ViewItems() {
+        return
+    }
+
+    client function Settings() {
+        return
+    }
+    
+    client function Exit() { 
+        return
+    }
+}
