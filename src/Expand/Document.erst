@@ -2,7 +2,7 @@ expand type Document {
     
 
 
-    client function ItemsInBox() {
+    client function ItemInBox() {
         GO.ShowBaloon("товары в коробки", 3000, true)
         return
     }
@@ -11,12 +11,12 @@ expand type Document {
         return
     }
 
-    client function ViewItems() {
+    client function ViewItem() {
     }
 
-    client function Settings() {
+    client function Setting() {
     }
     
-    client function Exit() { 
+    client function Exitt() { 
     }
 }

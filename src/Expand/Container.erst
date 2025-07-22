@@ -15,5 +15,5 @@ type FirstContainer of Container {
 }
 
 [Barcode = "(00){Extension:1}{Code:4}"]
-type SecondContainer of Container {
+type SecondContainer of Container {   
 }

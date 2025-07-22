@@ -1,8 +1,49 @@
 expand type Document {
     
     client function ItemsInBox() {
-        return
+        
+        Container box
+        Container con
+        string errMsg
+ 
+        while (true) {
+            box = ScanBox()
+            on fail {
+                return
+            }
+            errMsg = null
+            
+            while(true) {
+                con = ScanContainer(errMsg, "ШК текущей коробки: {box.Barcode}")
+                on fail {
+                    break
+                }
+                if (con.IsBox == true)
+                    if(box.Barcode != con.Barcode) {
+                        Confirm(Message = "Закрыть коробку?")
+                        on Confirm {
+                            var boxInTUTable = select first * from TransportUnits where Item.TUBarcode == con.Barcode
+                            var boxInActualLines = select * from ActualLines where Item.SSCC == con.Barcode
+                            
+                            if (boxInTUTable != null || boxInActualLines != null) {
+                                errMsg = "Коробка {con.Barcode} уже закрыта! Отсканируйте другую коробку"
+                                break
+                            }
+
+                            box = con
+                            continue
+                        }
+                        on Decline {
+                            continue
+                        }
+                    }
+                    else
+                        break
+           
+        }  
     }
+    
+}
 
     client function BoxesInPallet() {
         Container pallet
