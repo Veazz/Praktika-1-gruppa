@@ -1,13 +1,8 @@
 [Alias = "Агрегация"]
-[ShowDocumentsFromServerInList = true]
+[ShowDocumentsFromServerInList = false]
 
 type Aggregation of Document {
     client function DocumentEditResult Edit(User currentUser, UserGroup currentGroup) {
-        if (this.CreatedOnPDA != true) {
-            GO.ShowErrorBaloon("Вы открыли докумет с сервера.\nТак нельзя!", 5000, true)
-            return DocumentEditResult.Abort
-        }
-
         Menu(
             SaveInHistory = true,
             Buttons = [
@@ -18,7 +13,7 @@ type Aggregation of Document {
 
                 new Control {
                     DisplayText = "Коробки в паллеты",
-                    Action      = boxInPallets
+                    Action      = boxesInPallet
                 },
 
                 new Control {
@@ -42,8 +37,8 @@ type Aggregation of Document {
             ItemsInBox()
         }
 
-        on boxInPallets {
-            BoxInPallets()
+        on boxesInPallet {
+            BoxesInPallet()
         }
 
         on viewItems {

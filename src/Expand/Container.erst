@@ -2,22 +2,18 @@ expand Container
 {
     string Extension
     string Code
-    bool IsBox
-    {
-        this.Extension == "1"
+    bool IsBox {
+        return this.Extension == "1"
     }
-    bool IsPallet
-    {
-        this.Extension == "2"
+    bool IsPallet {
+        return this.Extension == "2"
     }
 }
 
 [Barcode = "00{Extension:1}{Code:4}"]
-type FirstPallet of Container
-{
+type FirstContainer of Container {
 }
 
 [Barcode = "(00){Extension:1}{Code:4}"]
-type SecondPallet of Container
-{
+type SecondContainer of Container {
 }
