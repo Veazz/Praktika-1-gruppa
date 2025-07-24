@@ -42,7 +42,7 @@ type Aggregation of Document {
         }
 
         on viewItems {
-            ViewItems()
+            ShowActualLines()
         }
 
         on settings {

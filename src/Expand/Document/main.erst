@@ -1,49 +1,86 @@
 expand type Document {
     
+int boxDepth = 10
+
     client function ItemsInBox() {
-        
-        Container box
-        Container con
         string errMsg
- 
+        Container box
+        InventoryItemRecord SelectedProduct
         while (true) {
             box = ScanBox()
             on fail {
                 return
             }
-            errMsg = null
             
-            while(true) {
-                con = ScanContainer(errMsg, "ШК текущей коробки: {box.Barcode}")
-                on fail {
-                    break
-                }
-                if (con.IsBox == true)
-                    if(box.Barcode != con.Barcode) {
-                        Confirm(Message = "Закрыть коробку?")
-                        on Confirm {
-                            var boxInTUTable = select first * from TransportUnits where Item.TUBarcode == con.Barcode
-                            var boxInActualLines = select * from ActualLines where Item.SSCC == con.Barcode
-                            
-                            if (boxInTUTable != null || boxInActualLines != null) {
-                                errMsg = "Коробка {con.Barcode} уже закрыта! Отсканируйте другую коробку"
-                                break
-                            }
+            var boxInActualLines = select first * from ActualLines where Item.SSCC == box.Barcode 
+            var boxInTUTable = select first * from TransportUnits where Item.TUBarcode == box.Barcode
+            
+            if (boxInActualLines != null) {
+                BoxsItems(box.Barcode)
+                break
+            }
+            else if (boxInTUTable != null) {
+                errMsg = "Коробка занята"
+                break
+            }
+            else
+                errMsg = null
 
-                            box = con
-                            continue
-                        }
-                        on Decline {
-                            continue
-                        }
-                    }
-                    else
-                        break
-           
-        }  
+            while(true) {
+                SelectedProduct = ScanProductBarcode(box.Barcode)
+                on fail {
+
+                }
+            }
+        }
     }
-    
-}
+
+    client function BoxsItems (string boxBarcode) {
+        var ItemsInBox = select * from ActualLines where Item.SSCC == boxBarcode
+        ShowItems(
+            Title = "Товары в коробке",
+            DataSource = ItemsInBox,
+            FooterText = "<button direction=\"deleteBox\" width=\"100%\" align=\"center\">Удалить</button>",
+
+            Columns = [
+            new ItemsColumn {
+                Title = "Наименование",
+                Align = ContentAlignment.MiddleLeft,
+                Format = "{Item.ProductName}",
+                Width = new Length { Value = 50, Units = LengthUnits.Percents}
+            },
+
+            new ItemsColumn {
+                Title = "Кол-во",
+                Align = ContentAlignment.MiddleCenter,
+                Format = "{Item.ActualQuantity}",
+                Width = new Length { Value = 25, Units = LengthUnits.Percents}
+            },
+
+            new ItemsColumn {
+                Title = "Серийный номер",
+                Align = ContentAlignment.MiddleCenter,
+                Format = "{Item.SN}",
+                Width = new Length { Value = 25, Units = LengthUnits.Percents}
+            }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            return
+        }
+        on deleteBox {
+            RemoveDocumentLine(DocumentLineToRemove = ItemsInBox)
+            return
+        }
+        refresh
+    }
 
     client function BoxesInPallet() {
         Container pallet
@@ -104,7 +141,7 @@ expand type Document {
     }
         
 
-    client function ViewItems() {
+    client function ShowActualLines() {
     }
 
     client function Settings() {

@@ -110,4 +110,77 @@ expand Document {
         
         return box
     }
+
+
+    client function InventoryItemRecord ScanProductBarcode (string boxBarcode)
+    {
+        string errorMessage
+        string ScannedBarcode
+        InventoryItemRecord SelectedProduct
+        var ItemsInBox = select * from ActualLines where Item.SSCC == boxBarcode
+        EditField(
+            SaveInHistory = true,
+            Field = ScannedBarcode,
+            EditType = FieldEditType.Session,
+            FieldType = FieldType.String,
+            WelcomeText = "Отсканируйте штрихкод товара:",
+            HeaderText = "<b color=\"Red\">{errorMessage}</b>",
+            FooterText = "<div><p align=\"center\" size=\"12\">Глубина коробки: {boxDepth}\tСейчас в коробке: {ItemsInBox.Count}</p></div>",
+            DataSource = ItemsInBox,
+            ShowList = ItemsInBox.Count > 0,
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.ProductName}",
+                    Width = new Length { Value = 50, Units = LengthUnits.Percents }
+                },
+
+                new ItemsColumn {
+                    Title = "Серийный номер",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.SN}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents }
+                },
+
+                new ItemsColumn {
+                    Title = "Кол-во",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.ActualQuantityString}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents }
+                }
+            ],
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                },
+                new Control {
+                    Barcode = "\{any\}",
+                    Action = scan
+                }
+            ]
+        )
+        on esc {
+            fail
+        }
+        on scan {
+
+        }
+        
+        if (ScannedBarcode == "") {
+            errorMessage = "ШК не введён"
+        }
+        (SelectedProduct) = ScanAndSearch(
+            ProcessSessionBarcode = true,
+            BarcodeSessionVariable = ScannedBarcode     
+        )
+        if (SelectedProduct == null){
+            errorMessage = "Товар не найден"
+            back
+        }
+
+    }
+
+
 }
