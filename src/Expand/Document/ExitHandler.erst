@@ -1,12 +1,12 @@
-expand Aggregation
+expand Aggregation 
 {
-    client function DocumentEditResult HandleExit(User currentUser)
+    private client function HandleExitFlow(User user)
     {
         var choice = GO.ChooseFromList(
             Title = "Выход",
             Items = [
                 "Временно выйти",
-                "Завершить",
+                "Завершить", 
                 "Назад"
             ],
             DefaultIndex = 2
@@ -21,14 +21,11 @@ expand Aggregation
                 return DocumentEditResult.Abort;
 
             case "Завершить":
-                if (this.ActualLines.Count == 0)
-                {
+                if (this.ActualLines.Count == 0) {
                     Documents.Delete(this);
                     GO.ShowInfo("Пустой документ удален.");
-                }
-                else
-                {
-                    this.Status = "Завершен";
+                } else {
+                    this.Status = "Завершен"; 
                     Documents.Save(this);
                     GO.ShowInfo("Документ завершен и выгружен.");
                 }
@@ -39,5 +36,15 @@ expand Aggregation
         }
         
         return DocumentEditResult.OK;
+    }
+    client function DocumentEditResult Edit(User user, UserGroup group)
+    {
+        var originalResult = base.Edit(user, group);
+        on exit 
+        {
+            return this.HandleExitFlow(user);
+        }
+        
+        return originalResult;
     }
 }
