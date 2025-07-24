@@ -69,6 +69,4 @@ expand type Document {
     client function Settings() {
     }
     
-    client function Exit() { 
-    }
 }
