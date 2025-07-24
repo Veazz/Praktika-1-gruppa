@@ -1,0 +1,43 @@
+expand Aggregation
+{
+    client function DocumentEditResult HandleExit(User currentUser)
+    {
+        var choice = GO.ChooseFromList(
+            Title = "Выход",
+            Items = [
+                "Временно выйти",
+                "Завершить",
+                "Назад"
+            ],
+            DefaultIndex = 2
+        );
+
+        switch (choice)
+        {
+            case "Временно выйти":
+                this.Status = "Приостановлен";
+                Documents.Save(this);
+                GO.ShowInfo("Работа приостановлена. Данные сохранены.");
+                return DocumentEditResult.Abort;
+
+            case "Завершить":
+                if (this.ActualLines.Count == 0)
+                {
+                    Documents.Delete(this);
+                    GO.ShowInfo("Пустой документ удален.");
+                }
+                else
+                {
+                    this.Status = "Завершен";
+                    Documents.Save(this);
+                    GO.ShowInfo("Документ завершен и выгружен.");
+                }
+                return DocumentEditResult.Abort;
+
+            case "Назад":
+                return DocumentEditResult.OK;
+        }
+        
+        return DocumentEditResult.OK;
+    }
+}
