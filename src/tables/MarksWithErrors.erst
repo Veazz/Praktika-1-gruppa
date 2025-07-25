@@ -1,6 +1,6 @@
 type MarksWithErrors of Table
 {
-    string SG
+    string SN
     string GTIN
     string BoxBC
 }

@@ -1,0 +1,200 @@
+expand Document {
+    client function Container ScanContainer (string errorMessage = null, string footerMsg = null)
+    {
+        string BarcodeTU
+        EditField(
+            SaveInHistory = true,
+            Field = BarcodeTU,
+            EditType = FieldEditType.Session,
+            FieldType = FieldType.String,
+            WelcomeText = "Отсканируйте штрихкод транспортной упаковки:",
+            HeaderText = "<b color=\"Red\">{errorMessage}</b>",
+            FooterText = "<div><p align=\"center\" size=\"14\">{footerMsg}</p></div>",
+            
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            fail
+        }
+
+        var TU = select first * from Containers where Item.Barcode == BarcodeTU
+
+        if (TU == null || (TU != null && (TU.IsBox != true && TU.IsPallet != true))) {
+            errorMessage = "Это не штрихкод транспортной упаковки!"
+            refresh
+        }
+        
+        return TU
+    }
+
+    client function Container ScanPallet (string errorMessage = null, string footerMsg = null)
+    {
+        string BarcodeTU
+        EditField(
+            SaveInHistory = true,
+            Field = BarcodeTU,
+            EditType = FieldEditType.Session,
+            FieldType = FieldType.String,
+            WelcomeText = "Отсканируйте штрихкод паллеты:",
+            HeaderText = "<b color=\"Red\">{errorMessage}</b>",
+            FooterText = "<div><p align=\"center\" size=\"14\">{footerMsg}</p></div>",
+            
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            fail
+        }
+
+        var pallet = select first * from Containers where Item.Barcode == BarcodeTU
+
+        if (pallet == null || pallet.IsPallet != true) {
+            errorMessage = "Это не штрихкод паллеты!"
+            refresh
+        }
+
+        var palletInTUTable = select first * from TransportUnits where Item.ParentBarcode == pallet.Barcode
+        var palletInActualLines = select first * from this.ActualLines where Item.palletNumber == pallet.Barcode
+
+        if (palletInTUTable != null || palletInActualLines != null) {
+            errorMessage = "Эта паллета уже закрыта!"
+            refresh
+        }
+
+        return pallet
+    }
+
+    client function Container ScanBox (string errorMessage = null, string footerMsg = null)
+    {
+        string BarcodeTU
+        var boxes = select * from this.ActualLines group by SSCC
+        var showIf = select first * from boxes where Item.CurrentQuantity == this.boxDepth
+        EditField(
+            SaveInHistory = true,
+            Field = BarcodeTU,
+            EditType = FieldEditType.Session,
+            FieldType = FieldType.String,
+            WelcomeText = "Отсканируйте штрихкод коробки:",
+            HeaderText = "<b color=\"Red\">{errorMessage}</b>",
+            FooterText = "<div><p align=\"center\" size=\"14\">{footerMsg}</p></div>",
+            DataSource = boxes,
+            ShowList = showIf != null,
+            Columns = [
+                new ItemsColumn {
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.CurrentQuantity == this.boxDepth:<b color=\"Red\">{Item.SSCC}</b>;<b color=\"blue\">{Item.SSCC}</b>}",
+                    Width = new Length {Value = 100, Units = LengthUnits.Percents}
+                }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            fail
+        }
+
+        var box = select first * from Containers where Item.Barcode == BarcodeTU
+
+        if (box == null || box.IsBox != true) {
+            errorMessage = "Это не штрихкод коробки!"
+            refresh
+        }
+        else
+            errorMessage = null
+        
+        
+        return box
+    }
+
+    client function InventoryItemRecord ScanProductBarcode (string boxBarcode)
+    {
+        string errorMessage
+        string ScannedBarcode
+        InventoryItemRecord SelectedProduct
+        var ItemsInBox = select * from this.ActualLines where Item.SSCC == boxBarcode
+        EditField(
+            SaveInHistory = true,
+            Field = ScannedBarcode,
+            EditType = FieldEditType.Session,
+            FieldType = FieldType.String,
+            WelcomeText = "Отсканируйте штрихкод товара:",
+            HeaderText = "<b color=\"Red\">{errorMessage}</b>",
+            FooterText = "<div><p align=\"center\" size=\"12\">Глубина коробки: {this.boxDepth}  Сейчас в коробке: {ItemsInBox.Count}</p></div>",
+            DataSource = ItemsInBox,
+            ShowList = ItemsInBox.Count > 0,
+
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.ProductName}",
+                    Width = new Length { Value = 50, Units = LengthUnits.Percents }
+                },
+
+                new ItemsColumn {
+                    Title = "Серийный номер",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.SN}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents }
+                }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                },
+                new Control {
+                    Barcode = "\{any\}",
+                    Action = scan
+                }
+            ]
+        )
+        on esc {
+            fail
+        }
+        on scan {
+
+        }
+        if (ScannedBarcode == "") {
+            errorMessage = "ШК не введён"
+        }
+        var bcd = GO.GetBarcodeData(ScannedBarcode)
+
+        var ItemInActualLines  = select first * from this.ActualLines where Item.InventoryItemBarcode == bcd.EAN13
+        if (ItemInActualLines != null) {
+            ViewItem(bcd.EAN13)
+            back
+        }
+        if (bcd.IsMark != true) {
+            errorMessage = "Введена не марка"
+            back
+        }
+        (SelectedProduct) = ScanAndSearch(
+            ProcessSessionBarcode = true,
+            BarcodeSessionVariable = ScannedBarcode     
+        )
+        if (SelectedProduct == null){
+            errorMessage = "Товар не найден"
+            back
+        }
+
+        SelectedProduct.SSCC = boxBarcode
+        SelectedProduct.SN = bcd.GS1.SerialNumber
+        return SelectedProduct
+    }
+}

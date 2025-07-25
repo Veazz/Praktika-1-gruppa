@@ -1,0 +1,30 @@
+server static function AddToTables (Document doc)
+{
+    var result = select * from doc.ActualLines group by SSCC
+    for (row in result) {
+        var rw1 = new TransportUnits.Row()
+        rw1.TUBarcode = row.SSCC
+        TransportUnits.Add(rw1)
+    }
+
+    result = select * from doc.ActualLines
+    BarcodeData bcd
+    for (row in result) {
+        bcd = GO.GetBarcodeData(row.InventoryItemBarcode)
+        var alreadyExist = select first * from Marks where Item.GTIN == bcd.GTIN && Item.SN == bcd.GS1.SerialNumber
+        if (alreadyExist != null) {
+            var rw3 = new MarksWithErrors.Row()
+            rw3.SN = row.SN
+            rw3.GTIN = bcd.GTIN
+            rw3.BoxBC = row.SSCC
+            MarksWithErrors.Add(rw3)
+            Marks.Remove(row = alreadyExist)
+            continue
+        }
+        var rw2 = new Marks.Row()
+        rw2.SN = row.SN
+        rw2.GTIN = bcd.GTIN
+        rw2.BoxBC = row.SSCC
+        Marks.Add(rw2)
+    }
+}

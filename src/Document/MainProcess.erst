@@ -3,6 +3,7 @@
 
 type Aggregation of Document {
     client function DocumentEditResult Edit(User currentUser, UserGroup currentGroup) {
+        var viewEnabled = select * from this.ActualLines group by SSCC
         Menu(
             SaveInHistory = true,
             Buttons = [
@@ -18,7 +19,8 @@ type Aggregation of Document {
 
                 new Control {
                     DisplayText = "Просмотр набранного",
-                    Action      = viewItems
+                    Action      = viewItems,
+                    Enabled     = viewEnabled.Count > 0
                 },
 
                 new Control {
@@ -50,9 +52,51 @@ type Aggregation of Document {
         }
 
         on exit {
-            return DocumentEditResult.Abort
-            Exit()
+            Menu (
+                SaveInHistory = true,
+                Buttons = [
+                    new Control {
+                        DisplayText = "Временно выйти",
+                        Action      = tempExit
+                    },
+
+                     new Control {
+                         DisplayText = "Завершить",
+                         Action      = exit
+                     },
+                 
+                    new Control {
+                         DisplayText = "Назад",
+                         Action     = Back
+                    }
+                ],
+
+                KeyJumps = [
+                    new Control {
+                        Key = Key.Escape,
+                        Action = esc
+                    }
+                ]
+            )
+            
+            on tempExit {
+                return DocumentEditResult.Abort
+            }
+            on exit {
+                Add()
+                return DocumentEditResult.OK
+            }
+            on Back {
+                back
+            }
+            on esc {
+                back
+            }
         }
         back
+    }
+    
+    client function Add () {
+        AddToTables(this)
     }
 }

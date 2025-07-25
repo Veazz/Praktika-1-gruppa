@@ -1,0 +1,192 @@
+expand Document
+{
+    client function ViewItems() {
+        var palletsInActualLines = select * from this.ActualLines where Item.palletNumber != null group by palletNumber
+        object selectedPallet
+        if (palletsInActualLines.Count > 0) {
+            ShowItems(
+                SaveInHistory = true,
+                Title = "Паллеты в документе",
+                DataSource = palletsInActualLines,
+                SelectedItem = selectedPallet,
+    
+                Columns = [
+                    new ItemsColumn {
+                        Title = "Номер паллеты",
+                        Align = ContentAlignment.MiddleLeft,
+                        Format = "{Item.palletNumber}",
+                        Width = new Length { Value = 100, Units = LengthUnits.Percents}
+                    }
+                ],
+    
+                KeyJumps = [
+                    new Control {
+                        Key = Key.Escape,
+                        Action = esc
+                    }
+                ]
+            )
+            on esc {
+                return
+            }
+        }
+        var boxes = select * from this.ActualLines group by SSCC
+        if (selectedPallet != null) {
+            boxes = select * from this.ActualLines where Item.palletNumber != selectedPallet.palletNumber group by SSCC
+        }
+        object selectedBox
+        ShowItems(
+            SaveInHistory = true,
+            Title = "Коробки в документе",
+            DataSource = boxes,
+            SelectedItem = selectedBox,
+
+            Columns = [
+                new ItemsColumn {
+                    Title = "ШК коробки",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.SSCC}",
+                    Width = new Length { Value = 100, Units = LengthUnits.Percents}
+                }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            back
+        }
+        if (selectedBox != null) {
+            object selected
+            var ItemsInBox = select * from this.ActualLines where Item.SSCC == selectedBox.SSCC
+            ShowItems(
+                SaveInHistory = true,
+                Title = "Товары в коробке",
+                DataSource = ItemsInBox,
+                SelectedItem = selected,
+
+                Columns = [
+                    new ItemsColumn {
+                        Title = "Наименование",
+                        Align = ContentAlignment.MiddleLeft,
+                        Format = "{Item.ProductName}",
+                        Width = new Length { Value = 50, Units = LengthUnits.Percents}
+                    },
+
+                    new ItemsColumn {
+                        Title = "Серийный номер",
+                        Align = ContentAlignment.MiddleCenter,
+                        Format = "{Item.SN}",
+                        Width = new Length { Value = 25, Units = LengthUnits.Percents}
+                    }
+                ],
+
+                KeyJumps = [
+                    new Control {
+                        Key = Key.Escape,
+                        Action = esc
+                    }
+                ]
+            )
+            on esc {
+                back
+            }
+        }
+    }
+
+    client function ViewBoxsItems (string boxBarcode) {
+        var ItemsInBox = select * from this.ActualLines where Item.SSCC == boxBarcode
+        string currentProduct
+        ShowItems(
+            SaveInHistory = true,
+            Title = "Товары в коробке",
+            DataSource = ItemsInBox,
+            FooterText = "<button direction=\"deleteBox\" width=\"100%\" align=\"center\">Очистить коробку</button>",
+            SelectedItem = currentProduct,
+
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.ProductName}",
+                    Width = new Length { Value = 50, Units = LengthUnits.Percents}
+                },
+
+                new ItemsColumn {
+                    Title = "Серийный номер",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.SN}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents}
+                }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            return
+        }
+        on deleteBox {
+            RemoveDocumentLine(DocumentLineToRemove = ItemsInBox)
+            return
+        }
+        refresh
+    }
+
+    client function ViewItem(string EAN13) {
+        var ItemInActualLines  = select * from this.ActualLines where Item.InventoryItemBarcode == EAN13
+        string GTIN = "0" + EAN13
+        ShowItems(
+            SaveInHistory = true,
+            Title = "Товары в коробке",
+            DataSource = ItemInActualLines,
+            FooterText = "<button direction=\"deleteItem\" width=\"100%\" align=\"center\">Удалить</button>",
+            
+            Columns = [
+                new ItemsColumn {
+                    Title = "Наименование",
+                    Align = ContentAlignment.MiddleLeft,
+                    Format = "{Item.ProductName}",
+                    Width = new Length { Value = 50, Units = LengthUnits.Percents}
+                },
+
+                new ItemsColumn {
+                    Title = "Кол-во",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{Item.SN}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents}
+                },
+
+                new ItemsColumn {
+                    Title = "Серийный номер",
+                    Align = ContentAlignment.MiddleCenter,
+                    Format = "{GTIN}",
+                    Width = new Length { Value = 25, Units = LengthUnits.Percents}
+                }
+            ],
+
+            KeyJumps = [
+                new Control {
+                    Key = Key.Escape,
+                    Action = esc
+                }
+            ]
+        )
+        on esc {
+            return
+        }
+        on deleteItem {
+            RemoveDocumentLine(DocumentLineToRemove = ItemInActualLines)
+            return
+        }
+        refresh
+    }
+}

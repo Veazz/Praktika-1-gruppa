@@ -1,0 +1,177 @@
+expand type Document {
+
+    int boxDepth = 10
+
+    client function ItemsInBox() {
+        string errMsg
+        Container box
+        InventoryItemRecord SelectedProduct
+        int nowInBox
+        while (true) {
+            box = ScanBox(errMsg)
+            on fail {
+                return
+            }
+            
+            var boxInActualLines = select first * from this.ActualLines where Item.SSCC == box.Barcode 
+            var boxInTUTable = select first * from TransportUnits where Item.TUBarcode == box.Barcode
+            
+            if (boxInActualLines != null) {
+                ViewBoxsItems(box.Barcode)
+                continue
+            }
+            else if (boxInTUTable != null) {
+                errMsg = "Коробка занята"
+                continue
+            }
+            else {
+                errMsg = null
+                nowInBox = 0
+            }
+
+            while(true) {
+                SelectedProduct = ScanProductBarcode(box.Barcode)
+                on fail {
+                    Confirm(Message = "Закончить работу с коробкой {box.Barcode}?")
+                    on Confirm {
+                        break
+                    }
+                    on Decline {
+                        continue
+                    }
+                }
+                SelectedProduct.Quantity = 1
+
+                this.AcceptInventoryItemRecord(SelectedProduct)
+                nowInBox =+ 1
+                
+                if (nowInBox == this.boxDepth) {
+                    GO.ShowBaloon("Коробка заполнена и автоматически закрывается", 3000, true)
+                    break
+                }
+            }
+        }
+    }
+
+    client function BoxesInPallet() {
+        Container pallet
+        Container con
+        string errMsg
+
+        while (true) {
+            pallet = ScanPallet(errMsg)
+            on fail {
+                return
+            }
+            errMsg = null
+            while(true) {
+                con = ScanContainer(errMsg, "ШК текущей паллеты: {pallet.Barcode}")
+                on fail {
+                    break
+                }
+                if (con.IsPallet == true)
+                    if(pallet.Barcode != con.Barcode) {
+                        Confirm(Message = "Закрыть паллету?")
+                        on Confirm {
+                            var palletInTUTable = select first * from TransportUnits where Item.ParentBarcode == con.Barcode
+                            var palletInActualLines = select first * from this.ActualLines where Item.palletNumber == con.Barcode
+                            
+                            if (palletInTUTable != null || palletInActualLines != null) {
+                                errMsg = "Паллета {con.Barcode} уже закрыта! Отсканируйте другую паллету"
+                                break
+                            }
+
+                            pallet = con
+                            continue
+                        }
+                        on Decline {
+                            continue
+                        }
+                    }
+                    else
+                        break
+                var boxInActualLines = select * from this.ActualLines where Item.SSCC == con.Barcode
+                var boxInTUTable = select first * from TransportUnits where Item.TUBarcode == con.Barcode
+
+                if (boxInActualLines.Count == 0 && boxInTUTable == null) {
+                    errMsg = "Коробки {con.Barcode} нет ни в документе, ни в таблице упаковок"
+                    continue
+                }
+                else
+                    errMsg = null
+                
+                if (boxInActualLines.Count != 0) {
+                    for(row in boxInActualLines) {
+                        row.palletNumber = pallet.Barcode
+                    }
+                }
+                else
+                    boxInTUTable.ParentBarcode = pallet.Barcode
+            }
+        }
+    }
+
+    
+    client function Settings() {
+        string errMsg = null
+        Menu(
+            SaveInHistory = true,
+            Buttons = [
+                new Control {
+                    DisplayText = "Изменить глубину коробки",
+                    Enabled     = this.ActualLines.Count == 0,
+                    Action      = changeDepth
+                },
+
+                new Control {
+                    DisplayText = "Назад",
+                    Action      = cancel
+                }
+            ]
+        )
+        on changeDepth {
+            EditField(
+                SaveInHistory = true,
+                EditType = FieldEditType.Session,
+                FieldType = FieldType.Int32,
+                Field = this.boxDepth,
+                WelcomeText = "Отсканируйте штрихкод транспортной упаковки:",
+                HeaderText = "<b color=\"Red\">{errMsg}</b>",
+                FooterText = "<div><p align=\"center\" size=\"14\">Глубина коробки сейчас: {boxDepth}</p></div>",
+                KeyJumps = [
+                    new Control {
+                        Key = Key.Escape,
+                        Action = esc
+                    }
+                ]
+            )
+            on esc {
+                back
+            }
+            if (this.boxDepth <= 0) {
+                errMsg = "Недопустимая глубина коробки"
+                reset
+            }
+        }
+
+        on cancel {
+            return
+        }
+    }
+    
+    client function Exit() {
+        
+    }
+
+
+    client function AcceptInventoryItemRecord (InventoryItemRecord SelectedProduct)
+    {
+        (DocumentItemCollection expectedLines, DocumentItemCollection actualLines) = CommitInventoryRecord(
+            ComparingFieldNamesForActualLines = ["SSCC", "SN"],
+            CheckDocumentInfill = false,
+            CombineEqualActualLines = true,
+            CheckQuantity = false
+        )
+    }
+
+}
