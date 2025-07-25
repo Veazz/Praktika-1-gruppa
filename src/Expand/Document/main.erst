@@ -147,6 +147,4 @@ int boxDepth = 10
     client function Settings() {
     }
     
-    client function Exit() { 
-    }
 }

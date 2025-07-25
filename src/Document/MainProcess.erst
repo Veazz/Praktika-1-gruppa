@@ -50,9 +50,49 @@ type Aggregation of Document {
         }
 
         on exit {
-            return DocumentEditResult.Abort
-            Exit()
+            Menu (
+                SavingHistory = true,
+                Buttons = [
+                     new Control {
+                         DisplayText = "Завершить",
+                         Action      = exit
+                     },
+                 
+                    new Control {
+                        DisplayText = "Временно выйти",
+                        Action      = tempExit
+                    },
+         
+                    new Control {
+                         DisplayText = "Назад",
+                         Action     = Back
+                    }
+                ],
+                KeyJumps = [
+                    new Control {
+                        Key = Key.Escape,
+                        Action = esc
+                    }
+                ]
+            )
+            
+            on tempExit
+            {
+                return DocumentEditResult.Abort
+            }
+            on exit
+            {
+                return DocumentEditResult.OK
+            }
+            on Back
+            {
+                back
+            }
+            on esc
+            {
+                back
+            }
         }
-        back
-    }
+        
+    }  
 }
